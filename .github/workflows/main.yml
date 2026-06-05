@@ -1,0 +1,57 @@
+name: CI/CD Pipeline - Portfolio
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  lint:
+    name: Linter / Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Instalar HTMLHint
+        run: npm install -g htmlhint
+        
+      - name: Validar sintaxe HTML
+        run: htmlhint "**/*.html"
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: lint
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload dos artefatos
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.' 
+
+      - name: Realizar Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
